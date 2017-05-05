@@ -39,8 +39,15 @@ def run_gamma_calculations(submit=True, step_size=0.5):
     if not os.path.isdir('lateral'):
         os.mkdir('lateral')
     os.chdir('lateral')
-
-    os.system('cp ../../CONTCAR POSCAR')
+   
+     
+    try:
+        os.system('cp ../../CONTCAR POSCAR')
+    except:
+	try:
+	    os.system('cp ../../POSCAR .')
+	except:
+	    raise IOError('No POSCAR or CONTCAR found in '+ os.path.dirname(os.path.dirname(os.getcwd())))
 
     # Pad the bottom layer with 20 Angstroms of vacuum.
     utl.ensure_vacuum(Structure.from_file('POSCAR'), 20)
@@ -77,6 +84,11 @@ def run_gamma_calculations(submit=True, step_size=0.5):
 
             # Copy input files
             os.chdir(dir)
+	    if not os.path.exists('../../INCAR'):
+        	raise IOError('No INCAR found in '+ os.path.dirname(os.path.dirname(os.getcwd())))
+
+    	    if not os.path.exists('../../KPOINTS'):
+        	raise IOError('No KPOINTS found in '+ os.path.dirname(os.path.dirname(os.getcwd())))
             os.system('cp ../../../INCAR .')
             os.system('cp ../../../KPOINTS .')
             os.system('cp ../POSCAR .')
@@ -106,7 +118,11 @@ def run_gamma_calculations(submit=True, step_size=0.5):
                         float(split_line[2])]
                     poscar.write(' '.join([str(i) for i in new_coords])
                                  + '\n')
-
+	    sub_exe = True
+	    if VASP_STD_BIN == 'None':
+                print 'Executable is missing in '+os.getcwd()+'/runjob'
+                print 'Configure mpint_config.yaml file with your executable!'
+		sub_exe = False
             if QUEUE_SYSTEM == 'pbs':
                 utl.write_pbs_runjob(dir, 1, 8, '1000mb', '2:00:00', VASP_STD_BIN)
                 submission_command = 'qsub runjob'
@@ -115,7 +131,7 @@ def run_gamma_calculations(submit=True, step_size=0.5):
                 utl.write_slurm_runjob(dir, 8, '1000mb', '2:00:00', VASP_STD_BIN)
                 submission_command = 'sbatch runjob'
 
-            if submit:
+            if submit and sub_exe:
                 os.system(submission_command)
 
             os.chdir('../')

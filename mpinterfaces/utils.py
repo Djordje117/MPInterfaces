@@ -942,8 +942,9 @@ def write_potcar(pot_path=VASP_PSP, types='None'):
 
     if pot_path == None:
         # This probably means the mpint_config.yaml file has not
-        # been set up.
-        pass
+        # been set up
+	raise IOError('mpint_config.yaml not properly configured. POTCAR not written.')
+        
     else:
         poscar = open('POSCAR', 'r')
         lines = poscar.readlines()
